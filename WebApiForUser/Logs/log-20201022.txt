@@ -1,0 +1,6 @@
+2020-10-22T07:56:04.6034837+03:00  [INF] Application started. Press Ctrl+C to shut down. (dcaefe54)
+2020-10-22T07:56:04.6118137+03:00  [INF] Hosting environment: "Development" (c3307c92)
+2020-10-22T07:56:04.6118844+03:00  [INF] Content root path: "C:\Users\ktsik\source\repos\WebApiForUser\WebApiForUser" (b5d60022)
+2020-10-22T11:08:53.4268094+03:00  [INF] Application started. Press Ctrl+C to shut down. (dcaefe54)
+2020-10-22T11:08:53.4390173+03:00  [INF] Hosting environment: "Development" (c3307c92)
+2020-10-22T11:08:53.4391592+03:00  [INF] Content root path: "C:\Users\ktsik\source\repos\WebApiForUser\WebApiForUser" (b5d60022)
