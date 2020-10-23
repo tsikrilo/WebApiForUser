@@ -28,8 +28,6 @@ namespace WebApiForUser
             services.AddScoped<IUserRepository, UserRepository>();
 
             //--------------------------------
-
-            //services.AddControllers().AddNewtonsoftJson();
             services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = null;

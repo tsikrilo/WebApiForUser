@@ -21,10 +21,6 @@ namespace UserWebApi.Controllers
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         }
 
-        /// <summary>
-        /// Gets the users.
-        /// </summary>
-        /// <returns></returns>
         // GET: api/Users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
