@@ -47,6 +47,7 @@ namespace WebApiForUser.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUserType(int id, UserType userType)
         {
+            // TODO Controllers should only be responsible for handling the requests
             if (id != userType.Id)
             {
                 return BadRequest();

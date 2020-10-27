@@ -36,7 +36,7 @@ namespace UserWebApi.Data
         /// Gets the user by identifier.
         /// </summary>
         /// <param name="userId">The user identifier.</param>
-        /// <returns></returns>
+        /// <returns>TODO fill in</returns>
         /// <exception cref="System.NotImplementedException"></exception>
         public async Task<ActionResult<User>> GetUserByID(int userId)
         {
@@ -44,6 +44,7 @@ namespace UserWebApi.Data
 
             if (user == null)
             {
+                // TODO repositories should have nothing to do with http
                 _logger.LogInformation("User with id: ${id} does not exist!");
                 throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.InternalServerError)
                 {
@@ -63,6 +64,7 @@ namespace UserWebApi.Data
         {
             try
             {
+                // TODO use async methods
                 _context.User.Add(user);
                 _context.SaveChanges();
             }
@@ -86,6 +88,7 @@ namespace UserWebApi.Data
         /// <exception cref="System.ArgumentNullException">user</exception>
         public async Task<ActionResult<User>> DeleteUser(int id)
         {
+            // TODO use async methods
             var user = _context.User.Find(id);
             if (user == null)
             {
@@ -123,7 +126,18 @@ namespace UserWebApi.Data
         /// <exception cref="System.ArgumentNullException">user</exception>
         public async Task<ActionResult<User>> UpdateUser(int id, User user)
         {
+            // TODO add argument checks
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (id <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(id));
+            }
             User userModified = _context.User.SingleOrDefault(x => x.Id == id);
+            // TODO what if user does not exist?
 
             userModified.Name = user.Name;
             userModified.Surname = user.Surname;

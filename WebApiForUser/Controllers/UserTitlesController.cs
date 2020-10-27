@@ -15,6 +15,7 @@ namespace WebApiForUser.Controllers
     {
         private readonly UserContext _context;
 
+        // TODO no reason for anything other than GET methods
         public UserTitlesController(UserContext context)
         {
             _context = context;

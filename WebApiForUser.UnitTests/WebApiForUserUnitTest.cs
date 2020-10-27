@@ -15,10 +15,11 @@ namespace UserWebApi.UnitTests
     public class UnitTests
     {
         private UsersController _usersController;
-        private Mock<IUserRepository> userRepositoryMocked;
-        private List<User> listOfUsers;
+        private Mock<IUserRepository> _userRepositoryMocked;
+        private List<User> _listOfUsers;
         private UserContext _context;
-        private User userInserted = new User()
+
+        private readonly User _userInserted = new User()
         {
             Id = 1,
             Name = "Name3",
@@ -30,7 +31,7 @@ namespace UserWebApi.UnitTests
             IsActive = false
         };
 
-        private User userDeleted = new User()
+        private readonly User _userDeleted = new User()
         {
             Id = 1,
             Name = "Name1",
@@ -45,26 +46,32 @@ namespace UserWebApi.UnitTests
         /// <summary>
         /// Sets up.
         /// </summary>
+        // TODO there is a TestInitialize annotation for this. you should NOT call it directly
         private void SetUp()
         {
+            // TODO no point in having this region
+
             #region Setup
 
-            userRepositoryMocked = new Mock<IUserRepository>(MockBehavior.Strict);
+            _userRepositoryMocked = new Mock<IUserRepository>(MockBehavior.Strict);
             var options = new DbContextOptionsBuilder<UserContext>()
-                            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-                             .Options;
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
 
+            // TODO we mock everything else than the tested "unit" in unit tests
             _context = new UserContext(options);
 
-            _usersController = new UsersController(userRepositoryMocked.Object);
+            _usersController = new UsersController(_userRepositoryMocked.Object);
 
-            listOfUsers = GetUsers();
+            _listOfUsers = GetUsers();
 
-            _context.AddRange(listOfUsers);
+            // TODO we do NOT manipulate the context in the unit tests
+            _context.AddRange(_listOfUsers);
             _context.SaveChanges();
 
             #endregion
         }
+
         /// <summary>
         /// Gets the users.
         /// </summary>
@@ -107,7 +114,8 @@ namespace UserWebApi.UnitTests
                 IsActive = false
             };
 
-            List<User> listOfUsers = new List<User>() {
+            List<User> listOfUsers = new List<User>()
+            {
                 user1, user2, user3
             };
 
@@ -122,7 +130,7 @@ namespace UserWebApi.UnitTests
         {
             SetUp();
 
-            userRepositoryMocked.Setup(c => c.InsertUser(userInserted)).ReturnsAsync(new User()
+            _userRepositoryMocked.Setup(c => c.InsertUser(_userInserted)).ReturnsAsync(new User()
             {
                 Id = 1,
                 Name = "Name1",
@@ -134,11 +142,11 @@ namespace UserWebApi.UnitTests
                 IsActive = true
             });
 
-            Task<ActionResult<User>> response = _usersController.PostUser(userInserted);
+            Task<ActionResult<User>> response = _usersController.PostUser(_userInserted);
 
             Assert.AreEqual(1, response.Result.Value.Id);
 
-            userRepositoryMocked.VerifyAll();
+            _userRepositoryMocked.VerifyAll();
 
             _context.Dispose();
         }
@@ -151,13 +159,13 @@ namespace UserWebApi.UnitTests
         {
             SetUp();
 
-            userRepositoryMocked.Setup(c => c.UpdateUser(1, listOfUsers[2])).ReturnsAsync(userInserted);
+            _userRepositoryMocked.Setup(c => c.UpdateUser(1, _listOfUsers[2])).ReturnsAsync(_userInserted);
 
-            Task<ActionResult<User>> response = _usersController.PutUser(1, listOfUsers[2]);
+            Task<ActionResult<User>> response = _usersController.PutUser(1, _listOfUsers[2]);
 
-            Assert.AreEqual(userInserted, response.Result.Value);
+            Assert.AreEqual(_userInserted, response.Result.Value);
 
-            userRepositoryMocked.VerifyAll();
+            _userRepositoryMocked.VerifyAll();
 
             _context.Dispose();
         }
@@ -170,12 +178,12 @@ namespace UserWebApi.UnitTests
         {
             SetUp();
 
-            userRepositoryMocked.Setup(c => c.DeleteUser(1)).ReturnsAsync(userDeleted);
+            _userRepositoryMocked.Setup(c => c.DeleteUser(1)).ReturnsAsync(_userDeleted);
 
             Task<ActionResult<User>> response = _usersController.DeleteUser(1);
 
             Assert.AreEqual(false, response.Result.Value.IsActive);
-            userRepositoryMocked.VerifyAll();
+            _userRepositoryMocked.VerifyAll();
             _context.Dispose();
         }
 
@@ -188,21 +196,23 @@ namespace UserWebApi.UnitTests
         {
             SetUp();
 
-            userRepositoryMocked.Setup(c => c.GetUserByID(1)).ReturnsAsync(listOfUsers[0]);
+            _userRepositoryMocked.Setup(c => c.GetUserByID(1)).ReturnsAsync(_listOfUsers[0]);
 
             Task<ActionResult<User>> response = _usersController.GetUser(1);
 
             Assert.AreEqual("Name1", response.Result.Value.Name);
 
-            userRepositoryMocked.VerifyAll();
+            _userRepositoryMocked.VerifyAll();
 
             _context.Dispose();
         }
+
         [TestMethod]
         public void UserControllerConstructorTest()
         {
             try
             {
+                // TODO we do not unit test constructors
                 var users = new UsersController(null);
                 Assert.Fail();
             }
@@ -213,5 +223,3 @@ namespace UserWebApi.UnitTests
         }
     }
 }
-
-

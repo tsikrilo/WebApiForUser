@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using UserWebApi.Data;
 using WebApi.Models;
 
+// TODO correct namespace everywhere, also cleanup imports
 namespace UserWebApi.Controllers
 {
     [Route("api/[controller]")]
@@ -25,6 +26,8 @@ namespace UserWebApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
+            // TODO controllers should return http response codes like 200, 400, 500
+
             return await _userRepository.GetUsers();
         }
 
@@ -39,7 +42,18 @@ namespace UserWebApi.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<User>> PutUser(int id, User user)
         {
-            return await _userRepository.UpdateUser(id, user);
+            // TODO no point in having both the path param id and user id
+            // TODO we use DTOs (Automapper)
+            // TODO handle exceptions in controller
+            // TODO log exceptions in controller
+            try
+            {
+                return await _userRepository.UpdateUser(id, user);
+            }
+            catch (Exception)
+            {
+                return new StatusCodeResult(500); // Internal Server Error
+            }
         }
 
         // POST: api/Users
