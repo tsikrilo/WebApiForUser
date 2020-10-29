@@ -1,9 +1,8 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using UserWebApi.Data;
 
-namespace WebApi.Models
+namespace LRSIntroductoryWebApi.Models
 {
     public class User
     {

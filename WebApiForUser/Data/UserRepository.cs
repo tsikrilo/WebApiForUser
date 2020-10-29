@@ -1,32 +1,29 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using LRSIntroductoryWebApi.DTO;
+using LRSIntroductoryWebApi.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
-using System.Web.Http;
-using WebApi.Models;
 
-namespace UserWebApi.Data
+namespace LRSIntroductoryWebApi.Data
 {
     public class UserRepository : IUserRepository
     {
         private UserContext _context;
-        private readonly ILogger _logger;
-
-        public UserRepository(UserContext context, ILogger<UserRepository> logger)
+        private IMapper _iMapper;
+        public UserRepository(UserContext context, IMapper iMapper)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(UserRepository));
-            _logger = logger;
+            _context = context;
+            _iMapper = iMapper;
         }
 
         /// <summary>
         /// Gets all users.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A list of users</returns>
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
             return await _context.User.ToListAsync();
@@ -36,21 +33,17 @@ namespace UserWebApi.Data
         /// Gets the user by identifier.
         /// </summary>
         /// <param name="userId">The user identifier.</param>
-        /// <returns></returns>
-        /// <exception cref="System.NotImplementedException"></exception>
+        /// <returns>The user which has the specified id</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">userId</exception>
         public async Task<ActionResult<User>> GetUserByID(int userId)
         {
-            var user = _context.User.Where(c => c.Id == userId).AsNoTracking().FirstOrDefaultAsync();
-
-            if (user == null)
+            if (userId <= 0)
             {
-                _logger.LogInformation("User with id: ${id} does not exist!");
-                throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.InternalServerError)
-                {
-                    Content = new StringContent("User with id: ${id} does not exist!"),
-                    ReasonPhrase = "Retrieve data Exception"
-                });
+                throw new ArgumentOutOfRangeException(nameof(userId));
             }
+
+            var user = _context.User.Where(c => c.Id == userId).FirstOrDefaultAsync();
+
             return await user;
         }
 
@@ -58,23 +51,17 @@ namespace UserWebApi.Data
         /// Creates a new user.
         /// </summary>
         /// <param name="user">The user.</param>
-        /// <returns></returns>
+        /// <returns>The created user</returns>
+        /// <exception cref="System.ArgumentNullException">user</exception>
         public async Task<ActionResult<User>> InsertUser(User user)
         {
-            try
+            if (user is null)
             {
-                _context.User.Add(user);
-                _context.SaveChanges();
+                throw new ArgumentNullException(nameof(user));
             }
-            catch (HttpResponseException)
-            {
-                _logger.LogInformation("Error trying to create user");
-                throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.BadRequest)
-                {
-                    Content = new StringContent("Error trying to create user"),
-                    ReasonPhrase = "Critical Exception"
-                });
-            }
+            await _context.User.AddAsync(user);
+            await _context.SaveChangesAsync();
+
             return await _context.User.FindAsync(user.Id);
         }
 
@@ -82,35 +69,14 @@ namespace UserWebApi.Data
         /// Deletes the user.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentNullException">user</exception>
+        /// <returns>The deleted user</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">id</exception>
         public async Task<ActionResult<User>> DeleteUser(int id)
         {
-            var user = _context.User.Find(id);
-            if (user == null)
+            if (id <= 0)
             {
-                _logger.LogInformation("User with id: ${id} does not exist!");
-                throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.InternalServerError)
-                {
-                    Content = new StringContent("Error trying to retrieve user data with id: ${id}")
-                });
+                throw new ArgumentOutOfRangeException(nameof(id));
             }
-
-            try
-            {
-                user.IsActive = false;
-                _context.Update(user);
-                await _context.SaveChangesAsync();
-            }
-            catch (HttpResponseException)
-            {
-                _logger.LogInformation("Error trying to update user's data");
-                throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.InternalServerError)
-                {
-                    Content = new StringContent("Error trying to set user with id: ${id} as inactive")
-                });
-            }
-
             return await _context.User.FindAsync(id);
         }
 
@@ -118,12 +84,31 @@ namespace UserWebApi.Data
         /// Updates the user's data with the specified id.
         /// </summary>
         /// <param name="id">The identifier.</param>
-        /// <param name="user">The user.</param>
-        /// <returns></returns>
+        /// <param name="userDto">userDTO</param>
+        /// <returns>The updated user.</returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">id</exception>
         /// <exception cref="System.ArgumentNullException">user</exception>
-        public async Task<ActionResult<User>> UpdateUser(int id, User user)
+        /// <exception cref="System.NullReferenceException">user modified</exception>
+        public async Task<ActionResult<User>> UpdateUser(int id, UserDTO userDto)
         {
-            User userModified = _context.User.SingleOrDefault(x => x.Id == id);
+            if (id <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(id));
+            }
+
+            if (userDto is null)
+            {
+                throw new ArgumentNullException(nameof(userDto));
+            }
+
+            var userModified = await _context.User.SingleOrDefaultAsync(x => x.Id == id);
+
+            if (userModified is null)
+            {
+                throw new NullReferenceException(nameof(userModified));
+            }
+
+            var user = _iMapper.Map<User>(userDto);
 
             userModified.Name = user.Name;
             userModified.Surname = user.Surname;
@@ -134,42 +119,9 @@ namespace UserWebApi.Data
             userModified.IsActive = user.IsActive;
             _context.Update(userModified);
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    _logger.LogInformation("User with id: ${id} does not exist!");
-                    throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.BadRequest)
-                    {
-                        Content = new StringContent("Error trying to update user data with id: ${id}")
-                    });
-                }
-                else
-                {
-                    _logger.LogInformation("Error updating user data with id: ${id}");
-                    throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.BadRequest)
-                    {
-                        Content = new StringContent("Error updating user data with id: ${id}")
-                    });
-                }
-            }
+            await _context.SaveChangesAsync();
 
             return await _context.User.FindAsync(user.Id);
         }
-
-        /// <summary>
-        /// Checks if the users with the specified id exists.
-        /// </summary>
-        /// <param name="id">The identifier.</param>
-        /// <returns></returns>
-        private bool UserExists(int id)
-        {
-            return _context.User.Any(e => e.Id == id);
-        }
-
     }
 }

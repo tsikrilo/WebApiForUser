@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using UserWebApi.Data;
 
-namespace WebApi.Models
+namespace LRSIntroductoryWebApi.Models
 {
     public class UserType
     {

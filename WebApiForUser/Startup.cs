@@ -1,3 +1,8 @@
+using AutoMapper;
+using LRSIntroductoryWebApi.Data;
+using LRSIntroductoryWebApi.MappingProfile;
+using LRSIntroductoryWebApi.Models;
+using LRSIntroductoryWebApi.Service;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -5,11 +10,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel;
-using UserWebApi.Data;
-using WebApi.Models;
+using System.Reflection;
 
-namespace WebApiForUser
+namespace LRSIntroductoryWebApi
 {
     public class Startup
     {
@@ -24,10 +27,14 @@ namespace WebApiForUser
         public void ConfigureServices(IServiceCollection services)
         {
             var connectionString = Configuration["ConnectionStrings:UserContext"];
-            services.AddDbContext<UserContext>(o => o.UseSqlServer(connectionString));
-            services.AddScoped<IUserRepository, UserRepository>();
+            var serviceProvider = services.BuildServiceProvider();
+            var logger = serviceProvider.GetService<ILogger<User>>();
 
-            //--------------------------------
+            services.AddDbContext<UserContext>(o => o.UseSqlServer(connectionString));
+            services.AddAutoMapper(typeof(UserMappingProfile).GetTypeInfo().Assembly);
+            services.AddSingleton(typeof(ILogger), logger);
+            services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<IUserService, UserService>();
             services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = null;
@@ -36,23 +43,18 @@ namespace WebApiForUser
             });
 
             services.AddCors();
-            //--------------------------------
             services.AddControllers();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory, ILogger logger)
         {
-
-            // other code remove for clarity
             loggerFactory.AddFile("Logs/log-{Date}.txt");
 
-            //---------------------------------
             app.UseCors(options =>
             options.WithOrigins("http://localhost:4200")
             .AllowAnyMethod()
             .AllowAnyHeader());
-            //---------------------------------
 
             if (env.IsDevelopment())
             {
